@@ -177,3 +177,4 @@ dist
 /obj/Debug
 /.vs/petstore-biz-worker
 /.vs/cloudfare-worker-petstore
+.vs/
