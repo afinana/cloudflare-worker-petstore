@@ -45,20 +45,28 @@ export class PetList extends OpenAPIRoute {
 
 		// Pet List call
 		console.log("petList call .isCompleted=" + isCompleted + ", page= " + JSON.stringify(page));
+		const limit = 100; // Define the limit of items per page
+		const cursorPage = page ? page * limit : 0;
 
-		// Fetch pets by statuses
-		const pets = [];
 		try {
-			const limit = 100; // Define the limit of items per page
-			const cursor = page ? page * limit : 0; // Calculate the cursor based on the page number
+			let cursor: string | undefined = undefined;
+			const pets = [];
+			let totalItems = 0;
 
-			const documents = await ctx.env.KV_BINDING_PETSTORE.list({ prefix: `pets:document:`, limit, cursor });
-			for (const key of documents.keys) {
-				const pet = await ctx.env.KV_BINDING_PETSTORE.get(key.name);
-				if (pet) {
-					pets.push(JSON.parse(pet));
+			do {
+				const result = await ctx.env.KV_BINDING_PETSTORE.list({ prefix: `pets:document:`, limit, cursor });
+				cursor = result.cursor;  // Continue pagination if cursor exists
+
+				for (const key of result.keys) {
+					if (totalItems >= cursorPage && totalItems < cursorPage + limit) {
+						const pet = await ctx.env.KV_BINDING_PETSTORE.get(key.name);
+						if (pet) {
+							pets.push(JSON.parse(pet));
+						}
+					}
+					totalItems++;
 				}
-			}
+			} while (cursor && totalItems < cursorPage + limit);
 
 			// Return the list of pets
 			return Response.json(
@@ -70,7 +78,6 @@ export class PetList extends OpenAPIRoute {
 					headers: { "Content-Type": "application/json" }
 				},
 			);
-
 
 		} catch (err) {
 			console.error(`KV returned error: ${err}`);

@@ -1,7 +1,6 @@
 import { Bool, Num, OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { User } from "../types";
-import { env } from "process";
 import { AppContext } from "../index";
 
 export class UserList extends OpenAPIRoute {
@@ -49,24 +48,33 @@ export class UserList extends OpenAPIRoute {
         // User List call
         console.log("userList call .isCompleted=" + isCompleted + ", page= " + JSON.stringify(page));
 
-        // Fetch users by statuses
-        const users = [];
-        try {
-            const limit = 100; // Define the limit of items per page
-            const cursor = page ? page * limit : 0; // Calculate the cursor based on the page number
+        const limit = 100; // Define the limit of items per page
+        const cursorPage = page ? page * limit : 0;
 
-            const documents = await ctx.env.KV_BINDING_PETSTORE.list({ prefix: `users:document:`, limit, cursor });
-            for (const key of documents.keys) {
-                const user = await ctx.env.KV_BINDING_PETSTORE.get(key.name);
-                if (user) {
-                    users.push(JSON.parse(user));
+        try {
+            let cursor: string | undefined = undefined;
+            const users = [];
+            let totalItems = 0;
+
+            do {
+                const result = await ctx.env.KV_BINDING_PETSTORE.list({ prefix: `users:document:`, limit, cursor });
+                cursor = result.cursor;  // Continue pagination if cursor exists
+
+                for (const key of result.keys) {
+                    if (totalItems >= cursorPage && totalItems < cursorPage + limit) {
+                        const user = await ctx.env.KV_BINDING_PETSTORE.get(key.name);
+                        if (user) {
+                            users.push(JSON.parse(user));
+                        }
+                    }
+                    totalItems++;
                 }
-            }
+            } while (cursor && totalItems < cursorPage + limit);
 
             // Return the list of users
             return Response.json(
                 {
-                    result: users
+                    collection: users
                 },
                 {
                     status: 200,
@@ -83,4 +91,3 @@ export class UserList extends OpenAPIRoute {
         }
     }
 }
-
