@@ -48,22 +48,27 @@ export class PetCreate extends OpenAPIRoute {
             console.log("petCreate call .json=" + json);
 
             // Implement your own object insertion here
-            const key = 'pets:document:' + petToCreate.id;
-            let value = await ctx.env.KV_BINDING_PETSTORE.put(key, json);
+            const petId = petToCreate.id.toString();
+            const key = 'pets:document:' + petId;
+
+            // Save the pet document
+            let value = await ctx.env.KV_BINDING_PETSTORE.put(key, json);          
             if (value === null) {
                 return addCORSHeaders(new Response("Error saving json", { status: 500 }));
             }
-            value = await ctx.env.KV_BINDING_PETSTORE.put("pets:status:" + petToCreate.status, petToCreate.id.toString());
+
+            // Save the pet id by status
+            const statusKey = `pets:status:${petToCreate.status}:${petId}`;
+            value = await ctx.env.KV_BINDING_PETSTORE.put(statusKey, petId);
             if (value === null) {
                 return addCORSHeaders(new Response("Error saving json", { status: 500 }));
             }
+
             // for each tag, add the pet id to the tag list
             for (let tag of petToCreate.tags) {
-                const id = petToCreate.id.toString();
-                const key = `pets:tag:${tag.name}:${id}`
-                console.log("saving tag:" + key + " .value=" + id);
-
-                value = await ctx.env.KV_BINDING_PETSTORE.put(key, id);
+                
+                const key = `pets:tag:${tag.name}:${petId}`;
+                value = await ctx.env.KV_BINDING_PETSTORE.put(key, petId);
                 if (value === null) {
                     return addCORSHeaders(new Response("Error saving json", { status: 500 }));
                 }
