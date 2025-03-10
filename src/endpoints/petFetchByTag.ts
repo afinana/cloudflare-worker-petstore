@@ -66,18 +66,6 @@ export class PetFetchByTag extends OpenAPIRoute {
                 }
             }
 
-            if (pets.length === 0) {
-                return addCORSHeaders(Response.json(
-                    {
-                        success: false,
-                        error: "No pets found for the given tags",
-                    },
-                    {
-                        status: 404,
-                    },
-                ));
-            }
-
             // Return the list of pets
             return addCORSHeaders(Response.json(
                 {

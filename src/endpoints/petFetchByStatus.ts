@@ -67,20 +67,6 @@ export class PetFetchByStatus extends OpenAPIRoute {
                 }
             }
 
-            if (pets.length === 0) {
-                return addCORSHeaders(new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: "No pets found for the given statuses",
-                    }),
-                    {
-                        status: 404,
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                    },
-                ));
-            }
 
             // Return the list of pets
             return addCORSHeaders(new Response(
