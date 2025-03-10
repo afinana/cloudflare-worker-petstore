@@ -54,11 +54,22 @@
 	
 	"env": {
 		"staging": {
-			"name": "staging",			
+			"name": "staging",
+			"vars": {},
 			"kv_namespaces": [
+					{
+						"binding": "KV_BINDING_PETSTORE",
+						"id": "07395c53097a43e3b5b79a3b402e490d"
+					}
+				]
+			},
+		"production": {
+			"name": "production",
+			"vars": {},
+			"routes": [
 				{
-					"binding": "KV_BINDING_PETSTORE",
-					"id": "07395c53097a43e3b5b79a3b402e490d"
+					"pattern": "api-petstore.middleland.info",
+					"custom_domain": true
 				}
 			]
 		}
