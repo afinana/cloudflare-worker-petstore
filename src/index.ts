@@ -33,13 +33,16 @@ const corsHeaders = {
 };
 
 export function addCORSHeaders(response: Response) {
-    const newResponse = new Response(response.body, {
+    const newHeaders = new Headers(response.headers);
+    for (const [key, value] of Object.entries(corsHeaders)) {
+        newHeaders.set(key, value);
+    }
+    return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
-        headers: corsHeaders,
+        headers: newHeaders,
     });
-    return newResponse;
-}; 
+}
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
@@ -52,18 +55,15 @@ const openapi = fromHono(app, {
 // Register the CORS preflight handler
 openapi.options('/*', (c: AppContext) => {
     // Add CORS headers
-
     c.header('Access-Control-Allow-Origin', '*');
     c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, HEAD, OPTIONS');
     c.header('Access-Control-Max-Age', '86400');
-    c.header('Access-Control-Allow-Headers', 'authorization ,x-worker-key,Content-Type,x-custom-metadata,Content-MD5,x-amz-meta-fileid,x-amz-meta-account_id,x-amz-meta-clientid,x-amz-meta-file_id,x-amz-meta-opportunity_id,x-amz-meta-client_id,x-amz-meta-webhook');
+    c.header('Access-Control-Allow-Headers', 'authorization,x-worker-key,Content-Type,x-custom-metadata,Content-MD5,x-amz-meta-fileid,x-amz-meta-account_id,x-amz-meta-clientid,x-amz-meta-file_id,x-amz-meta-opportunity_id,x-amz-meta-client_id,x-amz-meta-webhook');
     c.header('Access-Control-Allow-Credentials', 'true');
     c.header('Allow', 'GET, POST, PUT, DELETE, HEAD, OPTIONS');
 
-    return c.text('', 204);
+    return c.text('', { status: 204 });
 });
-
-
 
 // Register OpenAPI endpoints
 openapi.get("/v2/pet", PetList);
