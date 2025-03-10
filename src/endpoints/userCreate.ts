@@ -2,7 +2,7 @@ import { Bool, OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { User } from "../types";
 import { env } from "process";
-import { AppContext } from "../index";
+import { AppContext, addCORSHeaders } from "../index";
 
 export class UserCreate extends OpenAPIRoute {
     schema = {
@@ -52,25 +52,25 @@ export class UserCreate extends OpenAPIRoute {
             const key = 'users:document:' + userToCreate.id.toString();
             let value = await ctx.env.KV_BINDING_PETSTORE.put(key, json);
             if (value === null) {
-                return new Response("Error saving json", { status: 500 });
+                return addCORSHeaders(new Response("Error saving json", { status: 500 }));
             }
 
             const keyUsername = 'users:username:' + userToCreate.username;
             value = await ctx.env.KV_BINDING_PETSTORE.put(keyUsername, userToCreate.id.toString());
             if (value === null) {
-                return new Response("Error saving username index", { status: 500 });
+                return addCORSHeaders(new Response("Error saving username index", { status: 500 }));
             }
             // return the user document
-            return new Response(json, {
-                status: 200,
+            return addCORSHeaders(new Response(json, {
+                status: 201,
                 headers: { "Content-Type": "application/json" }
-            });
+            }));
 
         } catch (err) {
             // In a production application, you could instead choose to retry your KV
             // read or fall back to a default code path.
             console.error(`KV returned error: ${err}`);
-            return new Response(err, { status: 500 });
+            return addCORSHeaders(new Response(err, { status: 500 }));
         }
     }
-} ;
+};

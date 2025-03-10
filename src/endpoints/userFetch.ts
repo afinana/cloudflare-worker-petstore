@@ -1,7 +1,7 @@
 import { Bool, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
 import { User } from "../types";
-import { AppContext } from "../index";
+import { AppContext, addCORSHeaders } from "../index"; // Import addCORSHeaders
 
 export class UserFetch extends OpenAPIRoute {
     schema = {
@@ -61,7 +61,7 @@ export class UserFetch extends OpenAPIRoute {
 
             // @ts-ignore: check if the object exists
             if (json === false) {
-                return Response.json(
+                return addCORSHeaders(Response.json(
                     {
                         success: false,
                         error: "User not found",
@@ -69,21 +69,20 @@ export class UserFetch extends OpenAPIRoute {
                     {
                         status: 404,
                     },
-                );
+                ));
             }
 
             // return the user        
-            return new Response(json, {
+            return addCORSHeaders(new Response(json, {
                 status: 200,
                 headers: { "Content-Type": "application/json" }
-            });
+            }));
 
         } catch (err) {
             // In a production application, you could instead choose to retry your KV
             // read or fall back to a default code path.
             console.error(`KV returned error: ${err}`);
-            return new Response(err, { status: 500 });
+            return addCORSHeaders(new Response(err, { status: 500 }));
         }
     }
-} ;
-
+}

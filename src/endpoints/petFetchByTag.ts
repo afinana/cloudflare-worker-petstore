@@ -1,7 +1,7 @@
 import { Bool, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
 import { Pet } from "../types";
-import { AppContext } from "../index<";
+import { AppContext, addCORSHeaders } from "../index";
 
 export class PetFetchByTag extends OpenAPIRoute {
     schema = {
@@ -17,7 +17,7 @@ export class PetFetchByTag extends OpenAPIRoute {
                 description: "Returns a list of pets matching the tags",
                 content: {
                     "application/json": {
-                        schema: z.object({                           
+                        schema: z.object({
                             collection: z.array(Pet),
                         }),
                     },
@@ -40,7 +40,7 @@ export class PetFetchByTag extends OpenAPIRoute {
     async handle(ctx: AppContext): Promise<Response> {
         try {
             // Get validated data
-            const data = await this.getValidatedData < typeof this.schema > ();
+            const data = await this.getValidatedData<typeof this.schema>();
 
             // Retrieve the validated query parameter
             const { tags } = data.query;
@@ -67,7 +67,7 @@ export class PetFetchByTag extends OpenAPIRoute {
             }
 
             if (pets.length === 0) {
-                return Response.json(
+                return addCORSHeaders(Response.json(
                     {
                         success: false,
                         error: "No pets found for the given tags",
@@ -75,25 +75,23 @@ export class PetFetchByTag extends OpenAPIRoute {
                     {
                         status: 404,
                     },
-                );
+                ));
             }
 
             // Return the list of pets
-            return Response.json(
-                {                  
+            return addCORSHeaders(Response.json(
+                {
                     collection: pets,
                 },
                 {
                     status: 200,
                     headers: { "Content-Type": "application/json" }
                 },
-            );
-
+            ));
 
         } catch (err) {
             console.error(`KV returned error: ${err}`);
-            return new Response(err, { status: 500 });
+            return addCORSHeaders(new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } }));
         }
     }
-} ;
-
+}

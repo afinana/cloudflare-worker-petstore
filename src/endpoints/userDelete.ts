@@ -1,6 +1,6 @@
 import { Bool, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
-import { type AppContext } from '../index'; // Import AppContext
+import { type AppContext, addCORSHeaders } from '../index'; // Import AppContext and addCORSHeaders
 
 export class UserDelete extends OpenAPIRoute {
 	schema = {
@@ -50,27 +50,27 @@ export class UserDelete extends OpenAPIRoute {
 			const userKey = `users:document:${id}`;
 			const user = await ctx.env.KV_BINDING_PETSTORE.get(userKey);
 			if (!user) {
-				return new Response(
+				return addCORSHeaders(new Response(
 					JSON.stringify({ error: "User not found" }),
 					{ status: 404, headers: { "Content-Type": "application/json" } }
-				);
+				));
 			}
 
 			// Delete the user
 			await ctx.env.KV_BINDING_PETSTORE.delete(userKey);
 
 			// Return success response
-			return new Response(
+			return addCORSHeaders(new Response(
 				JSON.stringify({ success: true }),
 				{ status: 200, headers: { "Content-Type": "application/json" } }
-			);
+			));
 
 		} catch (err) {
 			console.error(`KV returned error: ${err}`);
-			return new Response(
+			return addCORSHeaders(new Response(
 				JSON.stringify({ error: err.message }),
 				{ status: 500, headers: { "Content-Type": "application/json" } }
-			);
+			));
 		}
 	}
 }

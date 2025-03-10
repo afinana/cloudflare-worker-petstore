@@ -1,7 +1,7 @@
 import { Bool, Num, OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { User } from "../types";
-import { AppContext } from "../index";
+import { AppContext, addCORSHeaders } from "../index";
 
 export class UserList extends OpenAPIRoute {
     schema = {
@@ -72,22 +72,22 @@ export class UserList extends OpenAPIRoute {
             } while (cursor && totalItems < cursorPage + limit);
 
             // Return the list of users
-            return Response.json(
-                {
+            return addCORSHeaders(new Response(
+                JSON.stringify({
                     collection: users
-                },
+                }),
                 {
                     status: 200,
                     headers: { "Content-Type": "application/json" }
                 },
-            );
+            ));
 
         } catch (err) {
             console.error(`KV returned error: ${err}`);
-            return new Response(
+            return addCORSHeaders(new Response(
                 JSON.stringify({ error: err.message }),
                 { status: 500, headers: { "Content-Type": "application/json" } }
-            );
+            ));
         }
     }
 }

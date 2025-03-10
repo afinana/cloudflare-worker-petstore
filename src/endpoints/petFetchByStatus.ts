@@ -2,7 +2,8 @@ import { Bool, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
 import { Pet } from "../types";
 import { env } from "process";
-import { AppContext } from "../index";
+import { AppContext, addCORSHeaders } from "../index";
+
 
 export class PetFetchByStatus extends OpenAPIRoute {
     schema = {
@@ -18,7 +19,7 @@ export class PetFetchByStatus extends OpenAPIRoute {
                 description: "Returns a list of pets matching the statuses",
                 content: {
                     "application/json": {
-                        schema: z.object({                            
+                        schema: z.object({
                             collection: z.array(Pet),
                         }),
                     },
@@ -42,7 +43,7 @@ export class PetFetchByStatus extends OpenAPIRoute {
         try {
 
             // Get validated data
-            const data = await this.getValidatedData < typeof this.schema > ();
+            const data = await this.getValidatedData<typeof this.schema>();
 
             // Retrieve the validated query parameter
             const { status } = data.query;
@@ -67,32 +68,42 @@ export class PetFetchByStatus extends OpenAPIRoute {
             }
 
             if (pets.length === 0) {
-                return Response.json(
-                    {
+                return addCORSHeaders(new Response(
+                    JSON.stringify({
                         success: false,
                         error: "No pets found for the given statuses",
-                    },
+                    }),
                     {
                         status: 404,
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
                     },
-                );
+                ));
             }
 
             // Return the list of pets
-            return Response.json(
-                {                   
+            return addCORSHeaders(new Response(
+                JSON.stringify({
                     collection: pets
-                },
+                }),
                 {
                     status: 200,
-                    headers: { "Content-Type": "application/json" }
+                    headers: {                       
+                        "Content-Type": "application/json",
+                    },
                 },
-            );
-            
+            ));
 
         } catch (err) {
             console.error(`KV returned error: ${err}`);
-            return new Response(err, { status: 500 });
+            return addCORSHeaders(new Response(
+                JSON.stringify({ error: err.message }),
+                {
+                    status: 500,
+                    headers: {"Content-Type": "application/json"},
+                },
+            ));
         }
     }
-} ;
+}

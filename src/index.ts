@@ -23,6 +23,24 @@ export type Env = {
 
 export type AppContext = Context<{ Bindings: Env }>;
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, HEAD, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+    'Access-Control-Allow-Headers': 'authorization,x-worker-key,Content-Type,x-custom-metadata,Content-MD5,x-amz-meta-fileid,x-amz-meta-account_id,x-amz-meta-clientid,x-amz-meta-file_id,x-amz-meta-opportunity_id,x-amz-meta-client_id,x-amz-meta-webhook',
+    'Access-Control-Allow-Credentials': 'true',
+    'Allow': 'GET, POST, PUT, DELETE, HEAD, OPTIONS'
+};
+
+export function addCORSHeaders(response: Response) {
+    const newResponse = new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: corsHeaders,
+    });
+    return newResponse;
+}; 
+
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
 
@@ -30,6 +48,22 @@ const app = new Hono<{ Bindings: Env }>();
 const openapi = fromHono(app, {
     docs_url: "/",
 });
+
+// Register the CORS preflight handler
+openapi.options('/*', (c: AppContext) => {
+    // Add CORS headers
+
+    c.header('Access-Control-Allow-Origin', '*');
+    c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, HEAD, OPTIONS');
+    c.header('Access-Control-Max-Age', '86400');
+    c.header('Access-Control-Allow-Headers', 'authorization ,x-worker-key,Content-Type,x-custom-metadata,Content-MD5,x-amz-meta-fileid,x-amz-meta-account_id,x-amz-meta-clientid,x-amz-meta-file_id,x-amz-meta-opportunity_id,x-amz-meta-client_id,x-amz-meta-webhook');
+    c.header('Access-Control-Allow-Credentials', 'true');
+    c.header('Allow', 'GET, POST, PUT, DELETE, HEAD, OPTIONS');
+
+    return c.text('', 204);
+});
+
+
 
 // Register OpenAPI endpoints
 openapi.get("/v2/pet", PetList);
@@ -51,4 +85,3 @@ openapi.post("/v2/user/login", UserLogin);
 
 // Export the Hono app
 export default app;
-

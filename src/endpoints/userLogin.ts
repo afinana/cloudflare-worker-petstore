@@ -2,7 +2,7 @@ import { Bool, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
 import { User } from "../types";
 import { env } from "process";
-import { AppContext } from "../index";
+import { AppContext, addCORSHeaders } from "../index";
 
 export class UserLogin extends OpenAPIRoute {
     schema = {
@@ -41,7 +41,7 @@ export class UserLogin extends OpenAPIRoute {
     };
 
     async handle(ctx: AppContext): Promise<Response> {
-       try {
+        try {
             // Get validated data
             const data = await this.getValidatedData<typeof this.schema>();
 
@@ -57,7 +57,7 @@ export class UserLogin extends OpenAPIRoute {
 
             // @ts-ignore: check if the object exists
             if (json === false) {
-                return Response.json(
+                return addCORSHeaders(Response.json(
                     {
                         success: false,
                         error: "Invalid username or password",
@@ -65,14 +65,14 @@ export class UserLogin extends OpenAPIRoute {
                     {
                         status: 401,
                     },
-                );
+                ));
             }
 
             const user = JSON.parse(json);
 
             // Check if the password matches
             if (user.password !== password) {
-                return Response.json(
+                return addCORSHeaders(Response.json(
                     {
                         success: false,
                         error: "Invalid username or password",
@@ -80,11 +80,11 @@ export class UserLogin extends OpenAPIRoute {
                     {
                         status: 401,
                     },
-                );
+                ));
             }
 
             // return success message
-            return Response.json(
+            return addCORSHeaders(Response.json(
                 {
                     success: true,
                     message: "Login successful",
@@ -92,14 +92,13 @@ export class UserLogin extends OpenAPIRoute {
                 {
                     status: 200,
                 },
-            );
+            ));
 
         } catch (err) {
             // In a production application, you could instead choose to retry your KV
             // read or fall back to a default code path.
             console.error(`KV returned error: ${err}`);
-            return new Response(err, { status: 500 });
+            return addCORSHeaders(new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } }));
         }
     }
-} ;
-
+};
