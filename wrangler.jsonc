@@ -68,7 +68,7 @@
 			"vars": {},
 			"routes": [
 				{
-					"pattern": "api-petstore.middleland.info",
+					"pattern": "api-petstore.middleland.net",
 					"custom_domain": true
 				}
 			]
